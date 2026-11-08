@@ -1,0 +1,4 @@
+# Draft build and data carry author notes: never publish them.
+draft.html
+data/site-draft.json
+.DS_Store
