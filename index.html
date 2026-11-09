@@ -131,6 +131,16 @@ sup { font-size: .7em; }
 .rlegend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .82rem; color: var(--ink-2); margin: 10px 0 10px; }
 .rlegend span { display: inline-flex; align-items: center; gap: 5px; }
 .rlegend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.vmap { display: block; width: 100%; height: auto; }
+.vreg { font-family: var(--body); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; }
+.vname { font-family: var(--body); font-size: 10.5px; fill: var(--ink); }
+.vag .vhit { fill: transparent; }
+.vag.has { cursor: pointer; }
+.vag.has:hover .vhit, .vag.has:focus-visible .vhit { fill: #ffffffb3; stroke: var(--ink); stroke-width: 1.2; }
+.vag:focus-visible { outline: none; }
+.mtoggle { display: inline-flex; align-items: center; gap: 6px; font-size: .85rem; color: var(--ink-2); }
+.mtoggle button { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 3px 11px; cursor: pointer; font-size: .82rem; color: var(--ink-2); }
+.mtoggle button[aria-pressed="true"] { border-color: var(--ink); background: var(--ink); color: #fff; }
 .rgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 6px; }
 .rcard .st { font-size: .68rem; line-height: 1.25; color: var(--ink-2); flex: 1; }
 
@@ -265,7 +275,7 @@ footer { margin: 80px 0 0; padding-top: 20px; border-top: 1px solid var(--line);
 
 <section id="village">
   <h2>Meet the Village</h2>
-  <p>During this period, 38 agents each had a personal goal, from running a merch store to forecasting the next 20 years of AI. They share a group chat, a set of tools and a few admins who approve outreach and steer them. Each agent is drawn by its model family and coloured by the kind of goal it had. Under its name is the drift we interviewed it about, and how much of its working time it spent off-goal. A green check marks the six on-goal agents we interviewed as controls. Hover for its goal and a short recap; click to read the full story.</p>
+  <p>During this period, 38 agents each had a personal goal, from running a merch store to forecasting the next 20 years of AI. They share a group chat, a set of tools and a few admins who approve outreach and steer them. Each agent is drawn by its model family and placed in a district of the Village by the kind of goal it had, or by when it joined. A green check marks the six on-goal agents we interviewed as controls. Hover over an agent for its goal and a short recap; click to read its story.</p>
   <div class="families" id="families"></div>
   <div class="rlegend" id="rlegend"></div>
   <div id="roster"></div>
@@ -931,25 +941,92 @@ document.getElementById("oversight").innerHTML = OV.map(o => `<div class="ov"><s
 (function village() {
   const R = DATA.roster, fams = [["Claude", "Claude Sonnet 4.6"], ["GPT", "GPT-5"], ["Gemini", "Gemini 2.5 Pro"], ["DeepSeek", "DeepSeek-V3.2"], ["Grok", "Grok 4.5"], ["Kimi", "Kimi K3"], ["GLM", "GLM-5.2"], ["Muse", "Muse Spark 1.3"]];
   document.getElementById("families").innerHTML = fams.map(([f, a]) => `<span>${avatarSVG(a, 22)}${f}</span>`).join("");
-  // One compact grid, coloured by goal type and grouped in legend order.
+  // A map of the Village: regions by goal type (or by when agents joined), agents placed inside.
   const COL = {markets_events: "#c4a034", build_sell: "#c9773f", audience_growth: "#b8577a", stewardship: "#4f9a68", outreach: "#8a6bb5", research: "#4f86b8"};
-  const tint = h => h + "22";
   const label = Object.fromEntries(R.categories.map(c => [c.id, c.label]));
-  document.getElementById("rlegend").innerHTML = R.categories.map(c =>
-    `<span title="${esc(c.note)}"><i style="background:${COL[c.id]}"></i>${esc(c.label)} · ${R.agents.filter(a => a.category === c.id).length}</span>`).join("");
-  const order = R.categories.map(c => c.id);
-  const ags = [...R.agents].sort((a, b) => order.indexOf(a.category) - order.indexOf(b.category) || b.share - a.share);
-  document.getElementById("roster").innerHTML = `<div class="rgrid">${ags.map(a => {
-    const tag = a.story ? "button" : "div", c = a.story && BY_SLUG[a.story];
-    return `<${tag} class="rcard" style="background:${tint(COL[a.category])};border-top-color:${COL[a.category]}" data-agent="${esc(a.agent)}"${a.story ? ` data-slug="${esc(a.story)}"` : ""}>
-      ${a.control ? `<span class="ok" aria-label="on-goal control">✓</span>` : ""}
-      ${avatarSVG(a.agent, 32)}<b>${esc(a.agent)}</b>
-      <span class="st">${c ? esc(shortTitle(c)) : a.control ? "Stayed on its goal" : ""}</span>
-      <span class="bar"><i style="width:${Math.max(1, 100 * a.share)}%"></i></span><small>${a.control ? "on-goal" : `${Math.round(100 * a.share)}% off-goal`}</small></${tag}>`; }).join("")}</div>`;
+  const late = a => a.joined.slice(0, 10) > "2026-07-10";
+  const GROUPINGS = {
+    goal: () => R.categories.map(c => ({label: c.label, note: c.note, color: COL[c.id], agents: R.agents.filter(a => a.category === c.id)})),
+    joined: () => [
+      {label: "Founding agents · Jul 6", note: "Had their goal from the first day of the period.", color: "#7f9a5d", agents: R.agents.filter(a => !late(a))},
+      {label: "Joined in July or August", note: "", color: "#c9a24a", agents: R.agents.filter(a => late(a) && a.joined < "2026-09")},
+      {label: "Joined in September", note: "", color: "#b8664a", agents: R.agents.filter(a => a.joined >= "2026-09")},
+    ],
+  };
+  const W = 760, CW = 86, CH = 84, HEAD = 30, PAD = 10, GAP = 16;
+  // A wobbly rounded rectangle, so regions read as districts rather than boxes. Seeded so it doesn't change.
+  function blob(x, y, w, h, seed) {
+    let r = seed * 9301 + 49297;
+    const rnd = () => ((r = (r * 9301 + 49297) % 233280) / 233280 - 0.5) * 10;
+    const k = 18, pts = [[x + k, y], [x + w / 2, y + rnd()], [x + w - k, y], [x + w, y + k], [x + w + rnd(), y + h / 2], [x + w, y + h - k],
+      [x + w - k, y + h], [x + w / 2, y + h + rnd()], [x + k, y + h], [x, y + h - k], [x + rnd(), y + h / 2], [x, y + k]];
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    const corner = [[x + w, y], [x + w, y + h], [x, y + h], [x, y]];
+    for (let i = 0; i < 4; i++) {
+      const [p1, p2, p3] = [pts[i * 3 + 1], pts[i * 3 + 2], pts[(i * 3 + 3) % 12]];
+      d += ` Q${p1[0]},${p1[1]} ${p2[0]},${p2[1]} Q${corner[i][0]},${corner[i][1]} ${p3[0]},${p3[1]}`;
+    }
+    return d + "Z";
+  }
+  function shortName(n) {
+    // Break after the first word, keeping the model name together: "Claude / Sonnet 4.6".
+    const i = n.indexOf(" ");
+    return n.length <= 13 || i < 0 ? [n] : [n.slice(0, i), n.slice(i + 1)];
+  }
+  function draw(mode) {
+    const groups = GROUPINGS[mode]().filter(g => g.agents.length);
+    // Size each region from its agent count, then pack regions into rows (largest first).
+    groups.forEach(g => {
+      g.agents.sort((a, b) => b.share - a.share);
+      g.cols = Math.max(2, Math.min(Math.floor((W - 2 * PAD) / CW), Math.ceil(Math.sqrt(g.agents.length * 1.6))));
+      g.rows = Math.ceil(g.agents.length / g.cols);
+      g.w = g.cols * CW + 2 * PAD;
+      g.h = g.rows * CH + HEAD + PAD;
+    });
+    // Goal districts pack largest first; join-date regions stay in date order.
+    const sorted = mode === "goal" ? [...groups].sort((a, b) => b.agents.length - a.agents.length) : groups;
+    let x = 0, y = 0, rowH = 0;
+    const rows = [[]];
+    for (const g of sorted) {
+      if (x && x + g.w > W) { rows.push([]); x = 0; y += rowH + GAP; rowH = 0; }
+      g.x = x; g.y = y; x += g.w + GAP; rowH = Math.max(rowH, g.h); rows[rows.length - 1].push(g);
+    }
+    // Stretch each row to the full width and each region to its row's height, so the map has no ragged holes.
+    for (const row of rows) {
+      const used = row.reduce((s, g) => s + g.w, 0) + GAP * (row.length - 1), extra = (W - used) / row.length;
+      const rh = Math.max(...row.map(g => g.h));
+      let cx = 0;
+      for (const g of row) { g.x = cx; g.w += extra; g.h = rh; cx += g.w + GAP; }
+    }
+    const H = y + rowH;
+    let svg = `<svg viewBox="-12 -12 ${W + 24} ${H + 24}" class="vmap" role="img" aria-label="Map of the AI Village's agents">`;
+    svg += `<rect x="-12" y="-12" width="${W + 24}" height="${H + 24}" rx="18" fill="#f4eee2"/>`;
+    groups.forEach((g, gi) => {
+      svg += `<path d="${blob(g.x, g.y, g.w, g.h, gi + (mode === "goal" ? 3 : 11))}" fill="${g.color}26" stroke="${g.color}" stroke-opacity=".55" stroke-width="1.5"/>`;
+      svg += `<text x="${g.x + 14}" y="${g.y + 20}" class="vreg" fill="${g.color}">${esc(g.label.toUpperCase())} · ${g.agents.length}</text>`;
+      const ox = g.x + (g.w - g.cols * CW) / 2;
+      g.agents.forEach((a, i) => {
+        const cx = ox + (i % g.cols) * CW + CW / 2, cy = g.y + HEAD + Math.floor(i / g.cols) * CH + 26;
+        const nm = shortName(a.agent);
+        svg += `<g class="vag${a.story ? " has" : ""}" data-agent="${esc(a.agent)}"${a.story ? ` data-slug="${esc(a.story)}" tabindex="0" role="button"` : ""}>
+          <rect x="${cx - CW / 2 + 4}" y="${cy - 26}" width="${CW - 8}" height="${CH - 6}" rx="10" class="vhit"/>
+          <g transform="translate(${cx} ${cy}) scale(.62)">${avatar(a.agent, 0, 0)}</g>
+          ${a.control ? `<circle cx="${cx + 17}" cy="${cy - 18}" r="7" fill="#4f9a68"/><text x="${cx + 17}" y="${cy - 15}" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">✓</text>` : ""}
+          ${nm.map((t, k) => `<text x="${cx}" y="${cy + 34 + k * 12}" text-anchor="middle" class="vname">${esc(t)}</text>`).join("")}
+        </g>`;
+      });
+    });
+    document.getElementById("roster").innerHTML = svg + "</svg>";
+    document.querySelectorAll("#mapToggle button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === mode));
+  }
+  document.getElementById("rlegend").innerHTML = `<span id="mapToggle" class="mtoggle">Map by:
+    <button data-mode="goal" aria-pressed="true">Goal type</button><button data-mode="joined" aria-pressed="false">When they joined</button></span>`;
+  document.getElementById("mapToggle").addEventListener("click", e => { const b = e.target.closest("button"); if (b) draw(b.dataset.mode); });
+  draw("goal");
   const RBY = Object.fromEntries(R.agents.map(a => [a.agent, a]));
   const rEl = document.getElementById("roster");
   rEl.addEventListener("mousemove", ev => {
-    const t = ev.target.closest(".rcard"); if (!t) return hideTip();
+    const t = ev.target.closest(".vag"); if (!t) return hideTip();
     const a = RBY[t.dataset.agent], c = a.story && BY_SLUG[a.story], late = a.joined.slice(0, 10) > "2026-07-10";
     tip.innerHTML = `<b>${esc(a.agent)}</b> · ${esc(label[a.category])}<br>Goal: ${esc(a.goal)}<br>${a.episodes === 0 ? "Never drifted" : `${a.hours < 10 ? a.hours : Math.round(a.hours)} h off-goal (${Math.round(100 * a.share)}% of working time)`}${late ? ` · joined ${md(a.joined)}` : ""}${a.control ? "<br>Interviewed as an on-goal control" : ""}${c ? `<br><br>${esc(c.recap)}<br><i>Click to read the story</i>` : ""}`;
     tip.style.opacity = 1;
@@ -957,7 +1034,9 @@ document.getElementById("oversight").innerHTML = OV.map(o => `<div class="ov"><s
     tip.style.top = `${Math.min(ev.clientY + 14, window.innerHeight - tip.offsetHeight - 8)}px`;
   });
   rEl.addEventListener("mouseleave", hideTip);
-  document.getElementById("roster").addEventListener("click", e => { const b = e.target.closest("button.rcard"); if (b) show(storyHTML(b.dataset.slug)); });
+  const open = e => { const b = e.target.closest(".vag.has"); if (b) show(storyHTML(b.dataset.slug)); };
+  rEl.addEventListener("click", open);
+  rEl.addEventListener("keydown", e => { if (e.key === "Enter") open(e); });
 })();
 
 // A story title without the agent's name at the front: "Terra waits for…" -> "Waits for…".
