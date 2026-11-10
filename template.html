@@ -120,10 +120,10 @@ sup { font-size: .7em; }
 .panel blockquote { margin: 0; font-family: var(--heading); font-size: .88rem; line-height: 1.45; color: var(--ink-2); background: #fffdf9; border-radius: 8px; padding: 8px 10px; position: relative; }
 .panel blockquote small { display: block; font-family: var(--body); font-size: .72rem; color: var(--muted); margin-top: 4px; }
 /* Return line from under panel 3 back up into panel 2 (panel centres at 1/2 and 5/2 column widths plus gaps). */
-.loop { position: relative; height: 34px; margin-left: calc((100% - 44px) / 3 * 1.5 + 22px); margin-right: calc((100% - 44px) / 3 * 0.5); border: 2px solid var(--accent); border-top: 0; border-radius: 0 0 12px 12px; }
+.loop { position: relative; height: 34px; margin-bottom: 18px; margin-left: calc((100% - 44px) / 3 * 1.5 + 22px); margin-right: calc((100% - 44px) / 3 * 0.5); border: 2px solid var(--accent); border-top: 0; border-radius: 0 0 12px 12px; }
 .loop::before { content: ""; position: absolute; left: -7px; top: -2px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 9px solid var(--accent); }
 .loop span { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); background: #fff; padding: 0 8px; font-size: .78rem; color: var(--accent); white-space: nowrap; }
-.stripfoot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: .88rem; color: var(--ink-2); margin: 6px 0 36px; }
+.stripfoot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: .88rem; color: var(--ink-2); margin: 10px 0 24px; }
 @media (max-width: 700px) { .panels { grid-template-columns: 1fr; } .panel + .panel::before { content: "↓"; left: 50%; top: -20px; } .loop { display: none; } }
 .av { display: block; flex: none; }
 .families { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: .82rem; color: var(--ink-2); margin: 4px 0 8px; }
