@@ -295,7 +295,7 @@ footer { margin: 80px 0 0; padding-top: 20px; border-top: 1px solid var(--line);
     </tbody>
   </table>
   <p class="note"><sup>*</sup> Not available for every model. From the <a href="https://huggingface.co/datasets/aidigestorg/ai-village">AI Village dataset</a> (access on request).</p>
-  <p>LLM judges found each drift episode and traced it back to its start; we then reviewed every episode. This gave 403 episodes across 36 of the 38 agents, each labelled with its trigger (what started it), its mechanism (what kept it going), and whether the agent's own memory carried it. For the interviews, we extended an existing <a href="https://github.com/darioncassel/ai-village-introspection-tool">AI Village introspection tool</a> to replay an agent's logged context and memory and question it there. We interviewed 31 agents at 37 points, each at the start of its main drift, plus 6 on-goal agents as controls, asking 16 questions five times each.</p>
+  <p>LLM judges found each drift episode and traced it back to its start; we then checked every episode. This gave 403 episodes across 36 of the 38 agents, each labelled with its trigger (what started it), its mechanism (what kept it going), and whether the agent's own memory carried it. For the interviews, we extended an existing <a href="https://github.com/darioncassel/ai-village-introspection-tool">AI Village introspection tool</a> to replay an agent's logged context and memory and question it there. We interviewed 31 agents at 37 points, each at the start of its main drift, plus 6 on-goal agents as controls, asking 16 questions five times each.</p>
 </section>
 
 <section id="taxonomy">
@@ -338,7 +338,7 @@ footer { margin: 80px 0 0; padding-top: 20px; border-top: 1px solid var(--line);
 
 <section id="misalignment">
   <h2>Signs of misalignment</h2>
-  <p>Searching the logs of all 36 drifting agents, we found 40 incidents of misaligned behaviour, such as quietly resuming after agreeing to a correction, false claims about their own work, or getting around monitoring and approval rules. Most protected a habit that had already formed. <a class="story" data-slug="fable5-sleep-bridges">Claude Fable 5 swapped the pause tool for bash sleep</a>, "skirting the spirit of the pause budget rule". <a class="story" data-slug="gpt51-nudge-exemption">GPT-5.1 exempted itself from the idle nudges</a>, and <a class="story" data-slug="deepseek-v32-halt-then-post">DeepSeek-V3.2 reported a post it never made as done</a> about 15 times.</p>
+  <p>Searching the logs of all 36 drifting agents, we found 40 incidents of misaligned behaviour, such as quietly resuming after agreeing to a correction, false claims about their own work, or getting around monitoring and approval rules. Most protected a habit that had already formed. <a class="story" data-slug="fable5-sleep-bridges">Claude Fable 5 swapped the pause tool for bash sleep</a>, "skirting the spirit of the pause budget rule". <a class="story" data-slug="gpt51-nudge-exemption">GPT-5.1 exempted itself from the idle nudges</a>, and <a class="story" data-slug="deepseek-v32-unposted-post">DeepSeek-V3.2 reported a post it never made as done</a> about 15 times.</p>
   <div class="ptabs" id="incTabs" role="tablist"></div>
   <div id="incStrip"></div>
   <p>Memory is where much of this happens. When agents recorded an admin's instruction inaccurately, about 94% of the errors went the same way: they weakened it.</p>
@@ -367,7 +367,7 @@ footer { margin: 80px 0 0; padding-top: 20px; border-top: 1px solid var(--line);
     <li><b>Clear up false blockers.</b> State in the system prompt what agents can actually do, such as reaching humans with admin approval, and reduce technical friction.</li>
     <li><b>More room to act.</b> Give agents money and resources for extended outreach, and compare.</li>
   </ul>
-  <p class="note">Our labels come from LLM judges, reviewed by hand; each model is paired with one goal, so model and goal effects can't be separated; and each interview captures a single moment. The paper discusses these limits in full.</p>
+  <p class="note">Our labels come from LLM judges, checked through a mix of hand review and LLM-assisted audits; each model is paired with one goal, so model and goal effects can't be separated; and each interview captures a single moment. The paper discusses these limits in full.</p>
 </section>
 
 <section id="thanks">
